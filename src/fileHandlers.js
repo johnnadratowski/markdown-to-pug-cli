@@ -1,13 +1,16 @@
 const fs = require('fs');
-const getAllFiles = require('get-all-files');
+const getAllFiles = require('get-all-files').default;
 const fileExtension = require('file-extension');
 const replaceExt = require('replace-ext');
+const mkdirp = require('mkdirp');
+const path = require('path');
+
 /**
  * Returns the content of the file in path
  * @param {String} path 
  * @returns {String}
  */
-export function getFileContent(path) {
+function getFileContent(path) {
     return content = fs.readFileSync(path, 'utf8');
 }
 
@@ -16,7 +19,7 @@ export function getFileContent(path) {
  * @param {String} path 
  * @returns {String[]}
  */
-export function getFilesInDirSingle(path) {
+function getFilesInDirSingle(path) {
     return fs.readdirSync(path);
 }
 
@@ -25,7 +28,7 @@ export function getFilesInDirSingle(path) {
  * @param {String} path
  * @returns {String[]}
  */
-export function getFilesInDirectoryRecusive(path) {
+function getFilesInDirectoryRecusive(path) {
     return getAllFiles.sync.array(path)
 }
 
@@ -35,7 +38,7 @@ export function getFilesInDirectoryRecusive(path) {
  * @param {Boolean} recursive If true, returns the files in subdirectories
  * @returns  {String[]} An array of files
  */
-export function getFilesInDirectory(path, recursive = false) {
+function getFilesInDirectory(path, recursive = false) {
     return (recursive)? getFilesInDirectoryRecusive(path) : getFilesInDirSingle(path);
 }
 
@@ -44,8 +47,9 @@ export function getFilesInDirectory(path, recursive = false) {
  * @param {String} path The path and the filename
  * @param {String} content The content
  */
-export function saveFile(path, content) {
-    fs.writeFileSync(path, content);
+function saveFile(filePath, content) {
+    mkdirp.sync(filePath.replace(path.basename(filePath), ''));
+    fs.writeFileSync(filePath, content);
 }
 
 /**
@@ -54,8 +58,10 @@ export function saveFile(path, content) {
  * @param {Boolean} recursive If true, returns the files in subdirectories too
  * @returns  {String[]} An array of files
  */
-export function getMarkdownFilesInDirectory(path, recursive = false) {
-    return getFilesInDirectory(path, content).filter(file => (fileExtension(file) === 'md'));
+function getMarkdownFilesInDirectory(path, recursive = false) {
+    return getFilesInDirectory(path, recursive)
+        .filter(file => (fileExtension(file) === 'md'))
+        .map(filePath => filePath.replace(path, ((path[path.length -1] === '/')? './': '.')));
 }
 
 /**
@@ -63,6 +69,14 @@ export function getMarkdownFilesInDirectory(path, recursive = false) {
  * @param {String} path Path to the file
  * @returns {String} 
  */
-export function chnageExtension(path) {
+function chnageExtension(path) {
     return replaceExt(path, '.pug');
 }
+
+exports.getFilesInDirSingle = getFilesInDirSingle;
+exports.chnageExtension = chnageExtension;
+exports.saveFile = saveFile;
+exports.getFilesInDirectory = getFilesInDirectory;
+exports.getFilesInDirectoryRecusive = getFilesInDirectoryRecusive;
+exports.getFileContent = getFileContent;
+exports.getMarkdownFilesInDirectory = getMarkdownFilesInDirectory;

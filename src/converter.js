@@ -1,52 +1,68 @@
-
 const fs = require('fs');
-const path = require('path');
-
-const logSymbols = require('log-symbols');
-const { isBinary } = require('istextorbinary')
-const cwd = process.cwd();
-const fileName = process.argv[2];
-const usageText = "Usage: md2pug <filepath>";
-
-function convert(converter) {
-
-    // STEP 1 Get the filename from argv
-    if (fileName === undefined) {
-        console.error(chalk.bgBlack.yellow("No filename found. Aborted."));
-        process.exit(1);
-    }
-
-    const filePath = cwd + path.sep + fileName;
-
-    // STEP 2 Check if the given file is text or binary
-    if (isBinary(filePath)) {
-        console.log(chalk.bgBlack.yellow("File is not a text file. Aborted."));
-        process.exit(2);
-    }
-
-    //  STEP 3 Get file content
-    try {
-        var content = fs.readFileSync(filePath, 'utf8');
-    } catch (error) {
-        console.log(chalk.bgBlack.yellow("No such file: " + filePath));
-        process.exit(3);
-    }
-
-    // STEP 4 Convert it with markdown-to-pug
-    const pug = converter.render(content);
-
-    // STEP 5 Print converted code to the file
-    let pugFileName = fileName.split(".");
-    pugFileName.pop();
-    pugFileName.push("pug");
-    pugFileName = pugFileName.join(".");
-    try {
-        fs.writeFileSync(pugFileName, pug);
-        console.log(chalk.blue(`${fileName} --> ${pugFileName}`) + chalk.green(`\t${logSymbols.success} DONE`));
-    } catch (error) {
-        console.log(chalk.bgBlack.yellow(error.message));
-        process.exit(4);
-    }
+const getAllFiles = require('get-all-files');
+const fileExtension = require('file-extension');
+const replaceExt = require('replace-ext');
+/**
+ * Returns the content of the file in path
+ * @param {String} path 
+ * @returns {String}
+ */
+export function getFileContent(path) {
+    return content = fs.readFileSync(path, 'utf8');
 }
 
-exports.convert = convert;
+/**
+ * Returns the files in the directory. Not recursive.
+ * @param {String} path 
+ * @returns {String[]}
+ */
+export function getFilesInDirSingle(path) {
+    return fs.readdirSync(path);
+}
+
+/**
+ * Returns the files in the directory. Recursive.
+ * @param {String} path
+ * @returns {String[]}
+ */
+export function getFilesInDirectoryRecusive(path) {
+    return getAllFiles.sync.array(path)
+}
+
+/**
+ * Returns files in the directory under path
+ * @param {String} path The path to the directory
+ * @param {Boolean} recursive If true, returns the files in subdirectories
+ * @returns  {String[]} An array of files
+ */
+export function getFilesInDirectory(path, recursive = false) {
+    return (recursive)? getFilesInDirectoryRecusive(path) : getFilesInDirSingle(path);
+}
+
+/**
+ * Writes content into a file
+ * @param {String} path The path and the filename
+ * @param {String} content The content
+ */
+export function saveFile(path, content) {
+    fs.writeFileSync(path, content);
+}
+
+/**
+ * Returns only the markdown files in the directory under path
+ * @param {String} path The path to the directory
+ * @param {Boolean} recursive If true, returns the files in subdirectories too
+ * @returns  {String[]} An array of files
+ */
+export function getMarkdownFilesInDirectory(path, recursive = false) {
+    return getFilesInDirectory(path, content).filter(file => (fileExtension(file) === 'md'));
+}
+
+/**
+ * Changes the extension of the file to .pug
+ * @param {String} path Path to the file
+ * @returns {String} 
+ */
+export function chnageExtension(path) {
+    return replaceExt(path, '.pug');
+}
